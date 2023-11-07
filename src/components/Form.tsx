@@ -14,6 +14,15 @@ import { Formik, Field, Form, FormikHelpers } from "formik";
 import axios from "axios";
 import Rtl from "./Rtl";
 import { Delete } from "@mui/icons-material";
+import {
+  Web,
+  Instagram,
+  Facebook,
+  Twitter,
+  Telegram,
+  LinkedIn,
+} from "@mui/icons-material";
+
 interface Values {
   type: string;
   link: string;
@@ -25,7 +34,6 @@ interface ExpandMoreProps extends IconButtonProps {
 }
 interface Item {
   id: number;
-  name: string;
   link: string;
   type: string;
 }
@@ -39,17 +47,62 @@ const ExpandMore = styled((props: ExpandMoreProps) => {
   }),
 }));
 
-export const RecipeReviewCard = () => {
+const api = axios.create({
+  baseURL: "http://localhost:3030/",
+});
+
+export const RecipeReviewCard = ({
+  fetch,
+  isEditing,
+  setIsEditing,
+  formData,
+}) => {
   const [expanded, setExpanded] = useState(false);
   const handleExpandClick = () => {
     setExpanded(true);
   };
   const handleReset = () => {
     setExpanded(false);
+    setIsEditing(false);
   };
-  const handleAddRout = () => {
+  const handleAddRout = async (values: Values) => {
     setExpanded(false);
+    if (values.type && values.id && values.link) {
+      try {
+        await api.post("socials", {
+          type: values.type,
+          link: values.link,
+          id: values.id,
+        });
+        fetch();
+      } catch (error) {
+        console.error("Error adding route:", error);
+      }
+    }
   };
+  const handleUpdate = async (value) => {
+    console.log(value.id);
+
+    try {
+      await api.post(`socials`, {
+        type: formData.type,
+        link: formData.link,
+        id: formData.id,
+      });
+    } catch (error) {
+      console.error("Error updating route:", error);
+    }
+    fetch();
+    setIsEditing(false);
+  };
+
+  const handleBTN = (formData) =>
+    isEditing ? handleUpdate(formData) : handleAddRout;
+  useEffect(() => {
+    if (isEditing) {
+      setExpanded(true);
+    }
+  }, [isEditing]);
   return (
     <Card sx={{ bgcolor: "inherit" }} elevation={0}>
       <CardActions disableSpacing>
@@ -67,7 +120,7 @@ export const RecipeReviewCard = () => {
               fontSize: "16px",
             }}
           >
-            + افزودن مسیر ارتباطی
+            + {isEditing ? "ويرايش" : "افزودن"} مسیر ارتباطی
           </span>
         </ExpandMore>
       </CardActions>
@@ -78,17 +131,18 @@ export const RecipeReviewCard = () => {
         sx={{ bgcolor: "rgb(51,61,71)", borderRadius: "6px" }}
       >
         <CardContent>
-          <Typography color="white">افزودن مسیر ارتباطی</Typography>
+          <Typography color="white">
+            {isEditing ? "ويرايش" : "افزودن"} مسیر ارتباطی
+          </Typography>
           <Formik
-            initialValues={{
-              type: "",
-              link: "",
-              id: "",
-            }}
+            initialValues={
+              isEditing ? formData : { type: "", link: "", id: "" }
+            }
             onSubmit={(
               values: Values,
               { setSubmitting }: FormikHelpers<Values>
             ) => {
+              handleAddRout(values);
               setTimeout(() => {
                 alert(JSON.stringify(values, null, 2));
                 setSubmitting(false);
@@ -110,11 +164,12 @@ export const RecipeReviewCard = () => {
                       name="type"
                       label="*نوع"
                     >
-                      <MenuItem value={"instagram"}>اینستاگرام</MenuItem>
-                      <MenuItem value={"web"}>وب سایت</MenuItem>
-                      <MenuItem value={"facebook"}>فیسبوک</MenuItem>
-                      <MenuItem value={"twitter"}>تویتر</MenuItem>
-                      <MenuItem value={"telgram"}>تلگرام</MenuItem>
+                      <MenuItem value={"اینستاگرام"}>اینستاگرام</MenuItem>
+                      <MenuItem value={"وب سایت"}>وب سایت</MenuItem>
+                      <MenuItem value={"فیسبوک"}>فیسبوک</MenuItem>
+                      <MenuItem value={"تویتر"}>تویتر</MenuItem>
+                      <MenuItem value={"تلگرام"}>تلگرام</MenuItem>
+                      <MenuItem value={"لينكداين"}>لينكداين</MenuItem>
                     </Field>
                   </Box>
 
@@ -139,9 +194,11 @@ export const RecipeReviewCard = () => {
                     color="warning"
                     type="submit"
                     variant="contained"
-                    onClick={handleAddRout}
+                    onClick={() => handleBTN(formData)}
                   >
-                    افزودن مسیر ارتباطی
+                    {isEditing ? "ويرايش" : "افزودن"}{" "}
+                    <span> مسیر ارتباطی </span>
+                    {isEditing && formData.type}
                   </Button>
                 </Box>
               </Rtl>
@@ -152,20 +209,50 @@ export const RecipeReviewCard = () => {
     </Card>
   );
 };
-
+const AddType = ({ type }: string) => {
+  if (type === "وب سایت") {
+    return <Web />;
+  } else if (type === "اینستاگرام") {
+    return <Instagram />;
+  } else if (type === "فیسبوک") {
+    return <Facebook />;
+  } else if (type === "تویتر") {
+    return <Twitter />;
+  } else if (type === "تلگرام") {
+    return <Telegram />;
+  } else if (type === "لینکداین") {
+    return <LinkedIn />;
+  }
+};
 const Forms = () => {
   const [data, setData] = useState<Item[]>([]);
-  const api = axios.create({
-    baseURL: "http://localhost:3030/",
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<Values>({
+    type: "",
+    link: "",
+    id: "",
   });
+
   const fetchData = async () => {
     try {
       const response = await api.get("socials");
       setData(response.data);
-      console.log(data);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
+  };
+  const handleDelete = async (id) => {
+    try {
+      await api.delete("socials/" + `${id}`);
+    } catch (error) {
+      console.log(error);
+    }
+    fetchData();
+  };
+  const handleEdit = (value) => {
+    console.log(value.link);
+    setFormData({ type: value.type, link: value.link, id: value.id });
+    setIsEditing(true);
   };
   useEffect(() => {
     fetchData();
@@ -188,7 +275,12 @@ const Forms = () => {
           </Typography>
           <br />
           <Typography sx={{ px: "20px", mb: "40px" }} component="div">
-            <RecipeReviewCard />
+            <RecipeReviewCard
+              fetch={fetchData}
+              isEditing={isEditing}
+              setIsEditing={setIsEditing}
+              formData={formData}
+            />
           </Typography>
           <Typography component="div" sx={{ pb: "30px", px: "20px" }}>
             <Paper
@@ -200,32 +292,33 @@ const Forms = () => {
                 px: "16px",
               }}
             >
-              <div style={{display: "flex" ,justifyContent: "center"}} >
-                <div style={{width:"100px"}}>نوع</div>
-                <div  style={{width:"100px"}}>لينك</div>
-                <div  style={{width:"100px"}}>آي دي</div>
-              </div>
               {data.map((item) => (
-                <Box sx={{ display: "flex",  }}>
+                <Box sx={{ display: "flex" }}key={item.id}>
                   <ListItem
                     sx={{
                       display: "flex",
                       justifyContent: "start",
                     }}
-                    key={item.id}
+                    
                   >
                     <div style={{ width: "100px" }}> </div>
                     <div style={{ width: "100px", display: "flex" }}>
-                       {item.type}
+                      <AddType type={item.type} />
+                      {item.type}
                     </div>{" "}
                     <div style={{ width: "100px", display: "flex" }}>
-                     {item.name}
+                      آی دی(ID){item.id}
                     </div>
                     <div style={{ width: "100px", display: "flex" }}>
-                     {item.link}
+                      لینک {item.link}
                     </div>
-                    <Button sx={{ mr: "10px" }}>ويرايش</Button>
-                    <Button>
+                    <Button
+                      sx={{ mr: "10px" }}
+                      onClick={() => handleEdit(item)}
+                    >
+                      ويرايش
+                    </Button>
+                    <Button onClick={() => handleDelete(item.id)}>
                       حذف <Delete color="error" />
                     </Button>
                   </ListItem>
