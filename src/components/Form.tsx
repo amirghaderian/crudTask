@@ -84,7 +84,7 @@ export const RecipeReviewCard = ({
     console.log(value.id);
 
     try {
-      await api.post(`socials`, {
+      await api.put(`socials/`+value.id, {
         type: formData.type,
         link: formData.link,
         id: formData.id,
@@ -92,12 +92,13 @@ export const RecipeReviewCard = ({
     } catch (error) {
       console.error("Error updating route:", error);
     }
+    console.log(formData.type);
     fetch();
     setIsEditing(false);
   };
 
-  const handleBTN = (formData) =>
-    isEditing ? handleUpdate(formData) : handleAddRout;
+  const handleBTN = (value) =>
+    isEditing ? handleUpdate(value) : handleAddRout;
   useEffect(() => {
     if (isEditing) {
       setExpanded(true);
@@ -143,6 +144,7 @@ export const RecipeReviewCard = ({
               { setSubmitting }: FormikHelpers<Values>
             ) => {
               handleAddRout(values);
+              handleBTN(values)
               setTimeout(() => {
                 alert(JSON.stringify(values, null, 2));
                 setSubmitting(false);
@@ -169,7 +171,7 @@ export const RecipeReviewCard = ({
                       <MenuItem value={"فیسبوک"}>فیسبوک</MenuItem>
                       <MenuItem value={"تویتر"}>تویتر</MenuItem>
                       <MenuItem value={"تلگرام"}>تلگرام</MenuItem>
-                      <MenuItem value={"لينكداين"}>لينكداين</MenuItem>
+                      <MenuItem value={"لینکدین"}>لینکدین</MenuItem>
                     </Field>
                   </Box>
 
@@ -194,7 +196,7 @@ export const RecipeReviewCard = ({
                     color="warning"
                     type="submit"
                     variant="contained"
-                    onClick={() => handleBTN(formData)}
+                    onClick={() => handleBTN()}
                   >
                     {isEditing ? "ويرايش" : "افزودن"}{" "}
                     <span> مسیر ارتباطی </span>
@@ -220,7 +222,7 @@ const AddType = ({ type }: string) => {
     return <Twitter />;
   } else if (type === "تلگرام") {
     return <Telegram />;
-  } else if (type === "لینکداین") {
+  } else if (type === "لینکدین") {
     return <LinkedIn />;
   }
 };
