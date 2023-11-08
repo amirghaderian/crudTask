@@ -80,25 +80,20 @@ export const RecipeReviewCard = ({
       }
     }
   };
-  const handleUpdate = async (value) => {
-    console.log(value.id);
-
+  const handleUpdate = async (value,formData) => {
     try {
-      await api.put(`socials/`+value.id, {
-        type: formData.type,
-        link: formData.link,
-        id: formData.id,
+      await api.put(`socials/` + formData.id, {
+        type: value.type,
+        link: value.link,
+        id: value.id,
       });
     } catch (error) {
       console.error("Error updating route:", error);
     }
-    console.log(formData.type);
     fetch();
     setIsEditing(false);
   };
 
-  const handleBTN = (value) =>
-    isEditing ? handleUpdate(value) : handleAddRout;
   useEffect(() => {
     if (isEditing) {
       setExpanded(true);
@@ -143,8 +138,11 @@ export const RecipeReviewCard = ({
               values: Values,
               { setSubmitting }: FormikHelpers<Values>
             ) => {
-              handleAddRout(values);
-              handleBTN(values)
+              if (isEditing) {
+                handleUpdate(values,formData);
+              } else {
+                handleAddRout(values);
+              }
               setTimeout(() => {
                 alert(JSON.stringify(values, null, 2));
                 setSubmitting(false);
@@ -192,12 +190,7 @@ export const RecipeReviewCard = ({
                   >
                     انصراف
                   </Button>
-                  <Button
-                    color="warning"
-                    type="submit"
-                    variant="contained"
-                    onClick={() => handleBTN()}
-                  >
+                  <Button color="warning" type="submit" variant="contained">
                     {isEditing ? "ويرايش" : "افزودن"}{" "}
                     <span> مسیر ارتباطی </span>
                     {isEditing && formData.type}
@@ -252,7 +245,6 @@ const Forms = () => {
     fetchData();
   };
   const handleEdit = (value) => {
-    console.log(value.link);
     setFormData({ type: value.type, link: value.link, id: value.id });
     setIsEditing(true);
   };
@@ -295,13 +287,12 @@ const Forms = () => {
               }}
             >
               {data.map((item) => (
-                <Box sx={{ display: "flex" }}key={item.id}>
+                <Box sx={{ display: "flex" }} key={item.id}>
                   <ListItem
                     sx={{
                       display: "flex",
                       justifyContent: "start",
                     }}
-                    
                   >
                     <div style={{ width: "100px" }}> </div>
                     <div style={{ width: "100px", display: "flex" }}>
