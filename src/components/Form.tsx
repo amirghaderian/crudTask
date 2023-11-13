@@ -295,6 +295,7 @@ const Forms = () => {
                     }}
                   >
                     <div style={{ width: "100px" }}> </div>
+                    
                     <div style={{ width: "100px", display: "flex" }}>
                       <AddType type={item.type} />
                       {item.type}
